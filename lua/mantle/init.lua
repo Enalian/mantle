@@ -62,6 +62,7 @@ end
 
 if SERVER then
 	resource.AddWorkshop("2924839375") -- DarkFated font
+	resource.AddWorkshop("3802225269") -- Icons Pack No1
 end
 
 MsgC(color_white, "------------------\n")
