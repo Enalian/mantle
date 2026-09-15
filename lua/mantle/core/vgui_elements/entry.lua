@@ -93,6 +93,7 @@ function PANEL:_paintEntry(s, w, h)
 	local padding = 6
 	local availableW = w - padding * 2
 	local textW = surface.GetTextSize(value)
+	local textH = s:IsMultiline() and 0 or h * 0.5
 	local desiredOffset = math.max(0, textW - availableW)
 
 	self._textOffset = Mantle.func.approachExp(self._textOffset, desiredOffset, 24, ft)
@@ -104,7 +105,15 @@ function PANEL:_paintEntry(s, w, h)
 		col = Mantle.color.text
 	end
 
-	draw.SimpleText(text, self.font, padding - self._textOffset, h * 0.5, col, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+	draw.SimpleText(
+		text,
+		self.font,
+		padding - self._textOffset,
+		textH,
+		col,
+		TEXT_ALIGN_LEFT,
+		s:IsMultiline() and TEXT_ALIGN_LEFT or TEXT_ALIGN_CENTER
+	)
 
 	if s:IsEditing() then
 		local blinkTarget = math.floor(CurTime() * 1.5) % 2 == 0 and 255 or 0
@@ -200,5 +209,13 @@ function PANEL:OnChange(strValue) end
 function PANEL:OnKeyCode(numKeyCode) end
 
 function PANEL:AllowInput(strValue) end
+
+function PANEL:SetMultiline(bool)
+	self.textEntry:SetMultiline(bool)
+end
+
+function PANEL:IsMultiline()
+	return self.textEntry:IsMultiline()
+end
 
 vgui.Register("MantleEntry", PANEL, "EditablePanel")
