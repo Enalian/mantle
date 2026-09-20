@@ -2,6 +2,7 @@ local PANEL = {}
 AccessorFunc(PANEL, "m_iMaxLength", "MaxLength", FORCE_NUMBER)
 AccessorFunc(PANEL, "m_bPasswordMode", "Password", FORCE_BOOL)
 AccessorFunc(PANEL, "m_sPasswordSymbol", "PasswordSymbol", FORCE_STRING)
+AccessorFunc(PANEL, "m_bHoverEnabled", "HoverEnabled", FORCE_BOOL)
 
 local HEIGHT = 32
 local RADIUS = 12
@@ -14,6 +15,7 @@ function PANEL:Init()
 
 	self.title = nil
 	self.placeholder = Mantle.lang.get("mantle", "entry_default_placeholder")
+	self.font = "Fated.18"
 	self.action = function() end
 
 	self:SetTall(HEIGHT)
@@ -22,7 +24,6 @@ function PANEL:Init()
 	self:SetPassword(false)
 	self:SetPasswordSymbol("*")
 
-	self.font = "Fated.18"
 	self._focusLerp = 0
 	self._textOffset = 0
 	self._caretSize = 2
@@ -37,19 +38,16 @@ function PANEL:Init()
 		self.action(s:GetValue())
 		self:OnEditingDone(s:GetValue())
 	end
-	self.textEntry.OnEnter = function(_, strValue)
-		self.action(strValue)
-		self:OnEditingDone(strValue)
-	end
 	self.textEntry.OnChange = function(s)
+		self:SetHoverEnabled(false)
+		self._customHoverColor = nil
+		self._customHoverTimer = nil
+
 		self:OnChange(s:GetValue())
 	end
 	self.textEntry.OnValueChange = function(_, strValue)
 		self.action(strValue)
 		self:OnEditingDone(strValue)
-	end
-	self.textEntry.OnKeyCode = function(_, numKeyCode)
-		self:OnKeyCode(numKeyCode)
 	end
 	self.textEntry.CheckNumeric = function(s, strValue)
 		if not s:GetNumeric() then
@@ -78,8 +76,13 @@ function PANEL:_paintEntry(s, w, h)
 
 	RNDX.Rect(0, 0, w, h):Rad(RADIUS):Color(Mantle.color.focus_panel):Draw()
 
-	if self._focusLerp > 0.01 then
+	if self._focusLerp > 0.01 or self:GetHoverEnabled() then
 		local theme = Mantle.color.theme
+		if self:GetHoverEnabled() then
+			theme = self._customHoverColor or Mantle.color.theme
+			self._focusLerp = 1
+		end
+
 		RNDX.Rect(0, 0, w, h)
 			:Rad(RADIUS)
 			:Color(Color(theme.r, theme.g, theme.b, math.floor(160 * self._focusLerp)))
@@ -201,12 +204,24 @@ end
 function PANEL:GetNumeric()
 	return self.textEntry:GetNumeric()
 end
+PANEL.IsNumeric = PANEL.GetNumeric
+
+function PANEL:Hover(clr, secs)
+	if not IsColor(clr) then
+		return
+	end
+	if not isnumber(secs) or secs < 1 then
+		return
+	end
+
+	self._customHoverColor = clr:Copy()
+	self._customHoverTimer = CurTime() + secs
+	self:SetHoverEnabled(true)
+end
 
 function PANEL:OnEditingDone(strValue) end
 
 function PANEL:OnChange(strValue) end
-
-function PANEL:OnKeyCode(numKeyCode) end
 
 function PANEL:AllowInput(strValue) end
 
@@ -216,6 +231,14 @@ end
 
 function PANEL:IsMultiline()
 	return self.textEntry:IsMultiline()
+end
+
+function PANEL:Think()
+	if isnumber(self._customHoverTimer) and self._customHoverTimer > 0 and CurTime() >= self._customHoverTimer then
+		self:SetHoverEnabled(false)
+		self._customHoverColor = nil
+		self._customHoverTimer = nil
+	end
 end
 
 vgui.Register("MantleEntry", PANEL, "EditablePanel")
