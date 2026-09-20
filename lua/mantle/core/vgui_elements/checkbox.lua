@@ -5,19 +5,17 @@ local math_floor = math.floor
 function PANEL:Init()
 	self:DockMargin(8, 8, 8, 8)
 	self.text = ""
-	self.convar = ""
 	self.value = false
 
 	self._toggleHover = 0
+	self._circle = 0
+	self._circleEased = 0
+	self._circleColor = Mantle.color.gray
 
 	self:SetText("")
 	self:SetCursor("hand")
 	self:SetTall(32)
 	self:SetTooltipPanelOverride("MantleTooltip")
-
-	self._circle = 0
-	self._circleEased = 0
-	self._circleColor = Mantle.color.gray
 
 	self.toggle = vgui.Create("Button", self)
 	self.toggle:SetTooltipPanelOverride("MantleTooltip")
@@ -27,7 +25,6 @@ function PANEL:Init()
 	self.toggle:SetText("")
 	self.toggle:SetCursor("hand")
 	self.toggle.Paint = nil
-
 	self.toggle.DoClick = function()
 		if self.convar ~= "" then
 			LocalPlayer():ConCommand(self.convar .. " " .. (self.value and 0 or 1))
@@ -38,8 +35,6 @@ function PANEL:Init()
 
 		Mantle.func.sound()
 	end
-
-	self._convarTimerName = self:CreateConVarSyncTimer()
 end
 
 function PANEL:OnMousePressed(mcode)
@@ -50,6 +45,15 @@ end
 
 function PANEL:SetTxt(text)
 	self.text = text
+	if #text < 1 then
+		self:SetTall(16)
+		self.toggle:Dock(FILL)
+		self.toggle:DockMargin(0, 0, 8, 0)
+	else
+		self:SetTall(32)
+		self.toggle:Dock(RIGHT)
+		self.toggle:DockMargin(0, 0, 10, 0)
+	end
 end
 
 function PANEL:SetValue(val)
@@ -64,48 +68,37 @@ function PANEL:SetConvar(convar)
 	local c = GetConVar(convar)
 	if c then
 		self.value = c:GetBool()
+		self.convar = c
 	end
-	self.convar = convar
 end
 
-function PANEL:CreateConVarSyncTimer()
-	local name = ("mantle_check_sync_%s"):format(tostring(self))
-	timer.Create(name, 0.1, 0, function()
-		if not IsValid(self) or self.convar == "" then
-			return
-		end
+function PANEL:Think()
+	local cvar = self.convar
+	if not cvar then
+		return
+	end
 
-		local cvar = GetConVar(self.convar)
-		if not cvar then
-			return
-		end
-
-		local val = cvar:GetBool()
-		if self.value ~= val then
-			self:SetValue(val)
-			self:OnChange(self.value)
-		end
-	end)
-	return name
-end
-
-function PANEL:OnRemove()
-	if self._convarTimerName then
-		timer.Remove(self._convarTimerName)
-		self._convarTimerName = nil
+	local val = cvar:GetBool()
+	if self.value ~= val then
+		self:SetValue(val)
+		self:OnChange(self.value)
 	end
 end
 
 function PANEL:OnChange(new_value) end
 
 function PANEL:Paint(w, h)
+	if not isstring(self.text) or #self.text < 1 then
+		return
+	end
+
 	RNDX.Rect(0, 0, w, h):Rad(12):Color(Mantle.color.focus_panel):Draw()
 
 	draw.SimpleText(self.text, "Fated.16", 10, h * 0.5, Mantle.color.text, TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 end
 
-function PANEL:PaintOver(w, h)
-	local tw, th = self.toggle:GetWide(), self.toggle:GetTall()
+function PANEL:PaintOver()
+	local tw, th = self.toggle:GetSize()
 	local tx, ty = self.toggle:GetPos()
 	local ft = FrameTime()
 
@@ -123,11 +116,11 @@ function PANEL:PaintOver(w, h)
 	local trackX = tx + (tw - trackW) * 0.5
 	local trackY = ty + (th - trackH) * 0.5
 
-	RNDX.Rect(trackX, trackY + 1, trackW, trackH - 2):Rad(trackH / 2):Color(Mantle.color.toggle):Draw()
+	RNDX.Rect(trackX, trackY + 1, trackW + 8, trackH - 2):Rad(trackH / 2):Color(Mantle.color.toggle):Draw()
 
 	if self._toggleHover > 0.01 then
 		local hv = Mantle.color.hover_overlay_strong
-		RNDX.Rect(trackX, trackY + 1, trackW, trackH - 2)
+		RNDX.Rect(trackX, trackY + 1, trackW + 8, trackH - 2)
 			:Rad(trackH / 2)
 			:Color(Color(hv.r, hv.g, hv.b, math_floor(hv.a * self._toggleHover)))
 			:Draw()
@@ -151,7 +144,6 @@ function PANEL:PaintOver(w, h)
 	self._circleColor = Mantle.func.LerpColor(14, self._circleColor, circleCol)
 
 	RNDX.Circle(circleCenterX, circleCenterY, circleSize * 0.5):Color(self._circleColor):Draw()
-
 	RNDX.Circle(circleCenterX, circleCenterY + 1, circleSize * 1.03 * 0.5):Color(Mantle.color.circle_shadow):Draw()
 end
 
