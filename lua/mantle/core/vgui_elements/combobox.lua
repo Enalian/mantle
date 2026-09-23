@@ -67,7 +67,7 @@ function PANEL:Init()
 end
 
 function PANEL:AddChoice(text, data)
-	table.insert(self.choices, { text = text, data = data })
+	return table.insert(self.choices, { text = text, data = data })
 end
 
 function PANEL:SetValue(val)
@@ -76,6 +76,31 @@ end
 
 function PANEL:GetValue()
 	return self.selected
+end
+
+function PANEL:GetSelected()
+	return self.sel_id ~= nil and self.choices[self.sel_id] or false
+end
+
+function PANEL:Select(id, no_call)
+	if not isnumber(id) then
+		return
+	end
+	no_call = tobool(no_call)
+
+	local choice = self.choices[id] or {}
+	if not istable(choice) or table.IsEmpty(choice) then
+		self.sel_id = nil
+		return
+	end
+
+	self.sel_id = id
+	self.selected = choice.text
+	self:CloseMenu()
+
+	if isfunction(self.OnSelect) and not no_call then
+		self:OnSelect(id, choice.text, choice.data)
+	end
 end
 
 function PANEL:SetPlaceholder(text)
@@ -95,12 +120,13 @@ function PANEL:OpenMenu()
 	for i, choice in ipairs(self.choices) do
 		local function onClick()
 			self.selected = choice.text
+			self.sel_id = i
 
 			if IsValid(menu) then
 				menu:CloseMenu()
 			end
-			if self.OnSelect then
-				self.OnSelect(i, choice.text, choice.data)
+			if isfunction(self.OnSelect) then
+				self:OnSelect(i, choice.text, choice.data)
 			end
 			Mantle.func.sound()
 		end
