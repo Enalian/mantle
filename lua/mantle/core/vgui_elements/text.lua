@@ -138,23 +138,6 @@ local function wrapAndEllipsize(font, text, maxw, maxLines)
 	return visible
 end
 
-local function getTextSize(font, txt)
-	surface.SetFont(font)
-	local ok, w, h = pcall(surface.GetTextSize, txt)
-	if not ok then
-		return 0, 16
-	end
-	if not h or type(h) ~= "number" or h <= 0 then
-		local ok2, _, h2 = pcall(surface.GetTextSize, "Ay")
-		if ok2 and type(h2) == "number" and h2 > 0 then
-			h = h2
-		else
-			h = 16
-		end
-	end
-	return tonumber(w) or 0, h
-end
-
 function PANEL:Init()
 	self:DockMargin(8, 8, 8, 8)
 	self.text = ""
@@ -213,20 +196,33 @@ function PANEL:SetPadding(padding)
 end
 
 function PANEL:GetContentSize()
-	local sz_h, len, sz_w = 0, 0, {}
-	for _, txt in ipairs(string.Explode("\n", self.text or "")) do
-		if #txt < 0 then
-			continue
+	if self._dirty then
+		local sz_h, len, sz_w = 0, 0, {}
+		for _, txt in ipairs(string.Explode("\n", self.text or "")) do
+			if #txt < 0 then
+				continue
+			end
+
+			surface.SetFont(self.font or "Fated.16")
+			local tw, th = surface.GetTextSize(txt)
+
+			table.insert(sz_w, tw)
+			sz_h = sz_h + th
+			len = len + 1
 		end
 
-        surface.SetFont(self.font or "Fated.16")
-		local tw, th = surface.GetTextSize(txt)
-		
-        table.insert(sz_w, tw)
-		sz_h = sz_h + th
-		len = len + 1
+		return math.max(unpack(sz_w)), math.max(0, sz_h + self.padding * (len - 1))
+	else
+		local font = self.font or "Fated.16"
+		local sz_w = {}
+		for _, txt in ipairs(self._lines or {}) do
+			surface.SetFont(font)
+			local tw = surface.GetTextSize(txt)
+			table.insert(sz_w, tw)
+		end
+
+		return math.max(unpack(sz_w)), #self._lines * self._lineH
 	end
-	return math.max(unpack(sz_w)), math.max(0, sz_h + self._lineH * (len - 1))
 end
 
 function PANEL:InvalidateTextLayout()

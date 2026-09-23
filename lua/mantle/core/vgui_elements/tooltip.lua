@@ -38,7 +38,7 @@ function PANEL:PerformLayout()
 		self.Contents:SetVisible(true)
 	else
 		local w, h = self.Label:GetContentSize()
-		self:SetSize(w + 8, h + 6)
+		self:SetSize(w + 18, h + 16)
 		if #self:GetText() < 1 then
 			self:Close()
 		else
