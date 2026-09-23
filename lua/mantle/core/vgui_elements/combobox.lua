@@ -82,6 +82,10 @@ function PANEL:GetSelected()
 	return self.sel_id ~= nil and self.choices[self.sel_id] or false
 end
 
+function PANEL:GetSelectedID()
+	return self.sel_id
+end
+
 function PANEL:Select(id, no_call)
 	if not isnumber(id) then
 		return
