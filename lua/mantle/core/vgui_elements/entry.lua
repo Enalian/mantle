@@ -1,5 +1,5 @@
 local PANEL = {}
-AccessorFunc(PANEL, "m_iMaxLength", "MaxLength", FORCE_NUMBER)
+AccessorFunc(PANEL, "m_sAllowedSymbols", "AllowedSymbols", FORCE_STRING)
 AccessorFunc(PANEL, "m_bPasswordMode", "Password", FORCE_BOOL)
 AccessorFunc(PANEL, "m_sPasswordSymbol", "PasswordSymbol", FORCE_STRING)
 AccessorFunc(PANEL, "m_bHoverEnabled", "HoverEnabled", FORCE_BOOL)
@@ -231,6 +231,18 @@ end
 
 function PANEL:IsMultiline()
 	return self.textEntry:IsMultiline()
+end
+
+function PANEL:SetAllowNonAsciiCharacters(bool)
+	self.textEntry:SetAllowNonAsciiCharacters(bool)
+end
+
+function PANEL:SetMaximumCharCount(c)
+	self.textEntry:SetMaximumCharCount(c)
+end
+
+function PANEL:GetMaximumCharCount()
+	return self.textEntry:GetMaximumCharCount()
 end
 
 function PANEL:Think()
