@@ -225,6 +225,10 @@ function PANEL:GetContentSize()
 	end
 end
 
+function PANEL:SizeToContents()
+	self:SetSize(self:GetContentSize())
+end
+
 function PANEL:InvalidateTextLayout()
 	self._dirty = true
 	self:InvalidateLayout()
