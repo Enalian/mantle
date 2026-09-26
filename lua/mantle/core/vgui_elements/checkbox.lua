@@ -26,7 +26,7 @@ function PANEL:Init()
 	self.toggle:SetCursor("hand")
 	self.toggle.Paint = nil
 	self.toggle.DoClick = function()
-		if self.convar ~= "" then
+		if isstring(self.convar) and self.convar ~= "" then
 			LocalPlayer():ConCommand(self.convar .. " " .. (self.value and 0 or 1))
 		end
 
