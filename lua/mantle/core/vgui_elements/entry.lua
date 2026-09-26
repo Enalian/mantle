@@ -1,4 +1,5 @@
 local PANEL = {}
+AccessorFunc(PANEL, "m_iMaxLength", "MaxLength", FORCE_NUMBER)
 AccessorFunc(PANEL, "m_sAllowedSymbols", "AllowedSymbols", FORCE_STRING)
 AccessorFunc(PANEL, "m_bPasswordMode", "Password", FORCE_BOOL)
 AccessorFunc(PANEL, "m_sPasswordSymbol", "PasswordSymbol", FORCE_STRING)
@@ -61,6 +62,11 @@ function PANEL:Init()
 		if max_len > 0 and len > max_len then
 			return true
 		end
+
+		if #self:GetAllowedSymbols() > 0 then
+			return string.find(self:GetAllowedSymbols(), strValue, 1, true) ~= nil
+		end
+
 		return isfunction(self.AllowInput) and self:AllowInput(strValue) or nil
 	end
 	self.textEntry.Paint = nil
@@ -208,7 +214,7 @@ PANEL.IsNumeric = PANEL.GetNumeric
 
 function PANEL:Hover(clr, secs)
 	if not IsColor(clr) then
-		return
+		clr = Mantle.color.theme
 	end
 	if not isnumber(secs) or secs < 1 then
 		return
@@ -231,18 +237,6 @@ end
 
 function PANEL:IsMultiline()
 	return self.textEntry:IsMultiline()
-end
-
-function PANEL:SetAllowNonAsciiCharacters(bool)
-	self.textEntry:SetAllowNonAsciiCharacters(bool)
-end
-
-function PANEL:SetMaximumCharCount(c)
-	self.textEntry:SetMaximumCharCount(c)
-end
-
-function PANEL:GetMaximumCharCount()
-	return self.textEntry:GetMaximumCharCount()
 end
 
 function PANEL:Think()
